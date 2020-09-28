@@ -52,9 +52,9 @@
         if (check(x, y)) {  //先检查是否有三连，再判断是❌还是⭕，进而确定winner
             setTimeout(function () {
                 //由于时间延后，要修改判断条件
-                alert(color == 1 ? "❌ is winner!" : "⭕ is winner!");     
-            }, 10);
-            location.reload();
+                alert(color == 1 ? "❌ is winner!" : "⭕ is winner!");   
+                location.reload();  
+            }, 100);
         }
         color = 3 - color;
     }
