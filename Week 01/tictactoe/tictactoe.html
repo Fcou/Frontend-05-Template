@@ -14,31 +14,103 @@
 </style>
 
 
-<div id="board"></div> 
+<div id="board"></div>
 
 <script>
     let pattern = [
-        [2, 0, 0],
-        [0, 1, 0],
+        [0, 0, 0],
+        [0, 0, 0],
         [0, 0, 0]
     ]
+    let color = 1;
 
-    function show(){
+    //绘制棋盘
+    function show() {
         let board = document.getElementById("board");
-        for(let i=0; i<3; i++){
+
+        board.innerHTML = "";
+
+        for (let i = 0; i < 3; i++) {
             for (let j = 0; j < 3; j++) {
                 let cell = document.createElement("div");
                 cell.classList.add("cell");
-                cell.innerText = 
-                    pattern[j][i] == 2? "❌":
-                    pattern[j][i] == 1? "⭕":
-                    "";
+                cell.innerText =
+                    pattern[i][j] == 2 ? "❌" :
+                        pattern[i][j] == 1 ? "⭕" :
+                            "";
+                cell.addEventListener("click", () => move(i, j));
                 board.appendChild(cell);
             }
             board.appendChild(document.createElement("br"));
         }
     }
+    //模拟落子
+    function move(x, y) {
+        pattern[x][y] = color; //修改数据模拟落子，默认⭕先落子
+        show();
 
-    show(pattern);
+        if (check(x, y)) {  //先检查是否有三连，再判断是❌还是⭕，进而确定winner
+            setTimeout(function () {
+                //由于时间延后，要修改判断条件
+                alert(color == 1 ? "❌ is winner!" : "⭕ is winner!");     
+            }, 10);
+            location.reload();
+        }
+        color = 3 - color;
+    }
+    //检查是否获胜
+    function check(x, y) {
+        //检查第x行是否存在三连
+        {
+            let win = true;
+            for (let j = 0; j < 3; j++) {
+                if (pattern[x][j] !== color) {
+                    win = false;
+                }
+            }
+            if (win) {
+                return true
+            }
+        }
+        //检查第y列是否存在三连
+        {
+            let win = true;
+            for (let i = 0; i < 3; i++) {
+                if (pattern[i][y] !== color) {
+                    win = false;
+                }
+            }
+            if (win) {
+                return true
+            }
+        }
+        //检查斜线是否存在三连
+        {
+            let win = true;
+            for (let i = 0; i < 3; i++) {
+                if (pattern[i][i] !== color) {
+                    win = false;
+                }
+            }
+            if (win) {
+                return true
+            }
+        }
+        {
+            let win = true;
+            for (let i = 0; i < 3; i++) {
+                if (pattern[i][2 - i] !== color) {
+                    win = false;
+                }
+            }
+            if (win) {
+                return true
+            }
+        }
+        return false;
+    }
+
+    //绘制空棋盘，开始游戏
+    show();
 
 </script>
