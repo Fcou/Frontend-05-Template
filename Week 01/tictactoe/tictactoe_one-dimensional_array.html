@@ -79,7 +79,7 @@
         if (choice.point) {
             pattern[choice.point[0] * 3 + choice.point[1]] = color;
         }
-        if (check(choice.point[0] * 3, choice.point[1], pattern, color)) {
+        if (check(choice.point[0], choice.point[1], pattern, color)) {
             setTimeout(function () {
                 //由于时间延后，要修改判断条件
                 alert(color == 1 ? " ❌ is winner!" : " ⭕ is winner!");
