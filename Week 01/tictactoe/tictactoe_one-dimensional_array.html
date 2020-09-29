@@ -68,12 +68,8 @@
             }, 100);
         }
         computerMove()
-
-        // if (willWin(pattern, color)) { //初级AI判断胜负
-        //     console.log(color == 2 ? " ❌ will win!" : " ⭕ will win!");
-        // }
     }
-    //AI落子
+    //高级AI落子
     function computerMove() {
         let choice = bestChoice(pattern, color);
         if (choice.point) {
@@ -121,32 +117,36 @@
                 return true;
             }
         }
-        //检查斜线是否存在三连
+        //检测两条斜线是否存在三连
         {
-            let win = true;
-            for (let i = 0; i < 3; i++) {
-                if (pattern[i * 3 + i] !== color) {
-                    win = false;
+            if (x == y) {
+                let win = true;
+                for (let i = 0; i < 3; i++) {
+                    if (pattern[i * 3 + i] !== color) {
+                        win = false;
+                    }
                 }
-            }
-            if (win) {
-                return true;
+                if (win) {
+                    return true;
+                }
             }
         }
         {
-            let win = true;
-            for (let i = 0; i < 3; i++) {
-                if (pattern[i * 3 + 2 - i] !== color) {
-                    win = false;
+            if (x == 2 - y) {
+                let win = true;
+                for (let i = 0; i < 3; i++) {
+                    if (pattern[i * 3 + 2 - i] !== color) {
+                        win = false;
+                    }
                 }
-            }
-            if (win) {
-                return true;
+                if (win) {
+                    return true;
+                }
             }
         }
         return false;
     }
-    //提示落子方有机会赢，初级AI
+    //初级AI,返回落子方直接赢的坐标
     function willWin(pattern, color) {
         for (let i = 0; i < 3; i++) {
             for (let j = 0; j < 3; j++) {
@@ -169,6 +169,7 @@
     //高级AI
     function bestChoice(pattern, color) {
         let p;
+        //判断是否存在直接嬴的点
         if (p = willWin(pattern, color)) {
             return {
                 point: p, //最好落子点
@@ -177,6 +178,7 @@
         }
         let result = -2;
         let point = null;
+        //找出最有可能赢的点
         outer: for (let i = 0; i < 3; i++) {
             for (let j = 0; j < 3; j++) {
                 if (pattern[i * 3 + j] !== 0) {
