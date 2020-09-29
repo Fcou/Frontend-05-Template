@@ -38,14 +38,14 @@
                     pattern[i * 3 + j] == 2 ? "❌" :
                         pattern[i * 3 + j] == 1 ? "⭕" :
                             "";
-                cell.addEventListener("click", () => move(i, j));
+                cell.addEventListener("click", () => userMove(i, j));
                 board.appendChild(cell);
             }
             board.appendChild(document.createElement("br"));
         }
     }
-    //模拟落子
-    function move(x, y) {
+    //用户落子
+    function userMove(x, y) {
         if (pattern[x * 3 + y] !== 0) {
             return
         }
@@ -61,11 +61,39 @@
         color = 3 - color;
         console.log(bestChoice(pattern, color)); //高级AI判断是否能赢
         show();
-
+        if (full()) {
+            setTimeout(function () {
+                alert("棋盘已满，和棋");
+                location.reload();
+            }, 100);
+        }
+        computerMove()
 
         // if (willWin(pattern, color)) { //初级AI判断胜负
         //     console.log(color == 2 ? " ❌ will win!" : " ⭕ will win!");
         // }
+    }
+    //AI落子
+    function computerMove() {
+        let choice = bestChoice(pattern, color);
+        if (choice.point) {
+            pattern[choice.point[0] * 3 + choice.point[1]] = color;
+        }
+        if (check(choice.point[0] * 3, choice.point[1], pattern, color)) {
+            setTimeout(function () {
+                //由于时间延后，要修改判断条件
+                alert(color == 1 ? " ❌ is winner!" : " ⭕ is winner!");
+                location.reload();
+            }, 100);
+        }
+        color = 3 - color;
+        show();
+        if (full()) {
+            setTimeout(function () {
+                alert("棋盘已满，和棋");
+                location.reload();
+            }, 100);
+        }
     }
     //检查是否获胜
     function check(x, y, pattern, color) {
@@ -170,6 +198,16 @@
             point: point, //最好落子点
             result: point ? result : 0 //提示落子后是赢1，和0，输-1
         }
+    }
+    //检查棋盘是否已满
+    function full() {
+        let full = true
+        for (let i = 0; i < 9; i++) {
+            if (pattern[i] == 0) {
+                return false;
+            }
+        }
+        return true;
     }
 
     //绘制空棋盘，开始游戏
