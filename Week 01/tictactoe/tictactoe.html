@@ -2,7 +2,7 @@
     .cell {
         width: 100px;
         height: 100px;
-        background-color: green;
+        background-color: greenyellow;
         display: inline-block;
         border: solid 1px white;
         vertical-align: middle;
@@ -46,20 +46,28 @@
     }
     //模拟落子
     function move(x, y) {
+        if (pattern[x][y] !== 0) {
+            return
+        }
         pattern[x][y] = color; //修改数据模拟落子，默认⭕先落子
         show();
 
-        if (check(x, y)) {  //先检查是否有三连，再判断是❌还是⭕，进而确定winner
+        if (check(x, y, pattern, color)) {  //先检查是否有三连，再判断是❌还是⭕，进而确定winner
             setTimeout(function () {
                 //由于时间延后，要修改判断条件
-                alert(color == 1 ? "❌ is winner!" : "⭕ is winner!");   
-                location.reload();  
+                alert(color == 1 ? " ❌ is winner!" : " ⭕ is winner!");
+                location.reload();
             }, 100);
         }
+
         color = 3 - color;
+
+        if (willWin(pattern, color)) {
+            console.log(color == 2 ? " ❌ will win!" : " ⭕ will win!");
+        }
     }
     //检查是否获胜
-    function check(x, y) {
+    function check(x, y, pattern, color) {
         //检查第x行是否存在三连
         {
             let win = true;
@@ -69,7 +77,7 @@
                 }
             }
             if (win) {
-                return true
+                return true;
             }
         }
         //检查第y列是否存在三连
@@ -81,7 +89,7 @@
                 }
             }
             if (win) {
-                return true
+                return true;
             }
         }
         //检查斜线是否存在三连
@@ -93,7 +101,7 @@
                 }
             }
             if (win) {
-                return true
+                return true;
             }
         }
         {
@@ -104,10 +112,29 @@
                 }
             }
             if (win) {
-                return true
+                return true;
             }
         }
         return false;
+    }
+    //提示落子方有机会赢，初级AI
+    function willWin(pattern, color) {
+        for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 3; j++) {
+                if (pattern[i][j] !== 0) {
+                    continue;
+                }
+                let tmp = clone(pattern);
+                tmp[i][j] = color;
+                if (check(i, j, tmp, color)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    function clone(pattern) {
+        return JSON.parse(JSON.stringify(pattern));
     }
 
     //绘制空棋盘，开始游戏
