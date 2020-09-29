@@ -2,7 +2,7 @@
     .cell {
         width: 100px;
         height: 100px;
-        background-color: greenyellow;
+        background-color: royalblue;
         display: inline-block;
         border: solid 1px white;
         vertical-align: middle;
@@ -18,9 +18,9 @@
 
 <script>
     let pattern = [
-        [0, 0, 0],
-        [0, 0, 0],
-        [0, 0, 0]
+        0, 0, 0,
+        0, 0, 0,
+        0, 0, 0
     ]
     let color = 1;
 
@@ -35,8 +35,8 @@
                 let cell = document.createElement("div");
                 cell.classList.add("cell");
                 cell.innerText =
-                    pattern[i][j] == 2 ? "❌" :
-                        pattern[i][j] == 1 ? "⭕" :
+                    pattern[i * 3 + j] == 2 ? "❌" :
+                        pattern[i * 3 + j] == 1 ? "⭕" :
                             "";
                 cell.addEventListener("click", () => move(i, j));
                 board.appendChild(cell);
@@ -46,13 +46,11 @@
     }
     //模拟落子
     function move(x, y) {
-        if (pattern[x][y] !== 0) {
+        if (pattern[x * 3 + y] !== 0) {
             return
         }
-        pattern[x][y] = color; //修改数据模拟落子，默认⭕先落子
-        show();
-
-        if (check(x, y, pattern, color)) {  //先检查是否有三连，再判断是❌还是⭕，进而确定winner
+        pattern[x * 3 + y] = color; //修改数据模拟落子，默认⭕先落子
+        if (check(x, y, pattern, color)) {  //判断winner，先检查是否有三连，再判断是❌还是⭕，进而确定winner
             setTimeout(function () {
                 //由于时间延后，要修改判断条件
                 alert(color == 1 ? " ❌ is winner!" : " ⭕ is winner!");
@@ -61,10 +59,13 @@
         }
 
         color = 3 - color;
+        console.log(bestChoice(pattern, color)); //高级AI判断是否能赢
+        show();
 
-        if (willWin(pattern, color)) {
-            console.log(color == 2 ? " ❌ will win!" : " ⭕ will win!");
-        }
+
+        // if (willWin(pattern, color)) { //初级AI判断胜负
+        //     console.log(color == 2 ? " ❌ will win!" : " ⭕ will win!");
+        // }
     }
     //检查是否获胜
     function check(x, y, pattern, color) {
@@ -72,7 +73,7 @@
         {
             let win = true;
             for (let j = 0; j < 3; j++) {
-                if (pattern[x][j] !== color) {
+                if (pattern[x * 3 + j] !== color) {
                     win = false;
                 }
             }
@@ -84,7 +85,7 @@
         {
             let win = true;
             for (let i = 0; i < 3; i++) {
-                if (pattern[i][y] !== color) {
+                if (pattern[i * 3 + y] !== color) {
                     win = false;
                 }
             }
@@ -96,7 +97,7 @@
         {
             let win = true;
             for (let i = 0; i < 3; i++) {
-                if (pattern[i][i] !== color) {
+                if (pattern[i * 3 + i] !== color) {
                     win = false;
                 }
             }
@@ -107,7 +108,7 @@
         {
             let win = true;
             for (let i = 0; i < 3; i++) {
-                if (pattern[i][2 - i] !== color) {
+                if (pattern[i * 3 + 2 - i] !== color) {
                     win = false;
                 }
             }
@@ -121,23 +122,58 @@
     function willWin(pattern, color) {
         for (let i = 0; i < 3; i++) {
             for (let j = 0; j < 3; j++) {
-                if (pattern[i][j] !== 0) {
+                if (pattern[i * 3 + j] !== 0) {
                     continue;
                 }
                 let tmp = clone(pattern);
-                tmp[i][j] = color;
+                tmp[i * 3 + j] = color;
                 if (check(i, j, tmp, color)) {
-                    return true;
+                    return [i, j]; //返回点坐标
                 }
             }
         }
-        return false;
+        return null;
     }
+    //复制数组
     function clone(pattern) {
-        return JSON.parse(JSON.stringify(pattern));
+        return Object.create(pattern);
+    }
+    //高级AI
+    function bestChoice(pattern, color) {
+        let p;
+        if (p = willWin(pattern, color)) {
+            return {
+                point: p, //最好落子点
+                result: 1 //提示落子后是赢1，和0，输-1
+            }
+        }
+        let result = -2;
+        let point = null;
+        outer: for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 3; j++) {
+                if (pattern[i * 3 + j] !== 0) {
+                    continue;
+                }
+                let tmp = clone(pattern);
+                tmp[i * 3 + j] = color;
+                let r = bestChoice(tmp, 3 - color).result; //计算我方落子后，对方的策略结果
+                if (-r > result) { //对方策略结果越好，则说明我方策略越差，要逆一下计算结果，递归比较得出我方最优解，留给对方结果最差的点
+                    result = -r;
+                    point = [i, j];
+                }
+                if (result == 1) { //减枝
+                    break outer;
+                }
+            }
+        }
+        return {
+            point: point, //最好落子点
+            result: point ? result : 0 //提示落子后是赢1，和0，输-1
+        }
     }
 
     //绘制空棋盘，开始游戏
     show();
+
 
 </script>
