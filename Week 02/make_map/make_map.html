@@ -1,0 +1,121 @@
+<style>
+    .cell {
+        display: inline-block;
+        line-height: 7px;
+        width: 6px;
+        height: 6px;
+        background-color: gray;
+        border-bottom: solid 1px white;
+        border-right: solid 1px white;
+        vertical-align: top;
+    }
+
+    #container {
+        width: 701px;
+    }
+</style>
+<div id="container"></div>
+
+<!--使用 JSON.stringify() 方法将 JavaScript 对象转换为字符串。-->
+<!--使用 local Storage 创建一个本地存储的 name/value 对，name="lastname" value="Smith", 然后检索 "lastname" 的值，并插入到 id="result" 的元素上-->
+<button onclick="localStorage['map']= JSON.stringify(map)"> save </button>
+
+<script>
+    //JSON.parse() 方法用来解析JSON字符串，构造由字符串描述的JavaScript值或对象。
+    let map = localStorage["map"] ? JSON.parse(localStorage["map"]) : Array(10000).fill(0);
+    let container = document.getElementById("container")
+
+    let mousedone = false;
+    let clear = false;
+
+    for (let x = 0; x < 100; x++) {
+        for (let y = 0; y < 100; y++) {
+            let cell = document.createElement("div");
+            cell.classList.add("cell");
+            //0代表没墙，1代表有墙，颜色区分
+            if (map[100 * x + y] == 1) {
+                cell.style.backgroundColor = "black";
+            }
+            //编辑地图
+            cell.addEventListener("mousemove", () => {
+                if (mousedone) {
+                    if (clear) {
+                        cell.style.backgroundColor = "";
+                        map[100 * x + y] = 0;
+                    } else {
+                        cell.style.backgroundColor = "black";
+                        map[100 * x + y] = 1;
+                    }
+                }
+            })
+            container.appendChild(cell);
+        }
+    }
+    //e简单来说就是指向了当前发生的事件
+    document.addEventListener("mousedown", e => {
+        mousedone = true;
+        //event.which也将正常化的按钮按下(mousedown 和 mouseupevents)，左键报告1，中间键报告2，右键报告3
+        clear = (e.which === 3)
+    })
+    document.addEventListener("mouseup", () => mousedone = false);
+    // document.addEventListener("contextmenu", e => e.preventDefault());
+
+    function sleep(t) {
+        return new Promise(function (resolve, reject) {
+            setTimeout(resolve, t);
+        });
+    }
+
+    //async 函数返回的是一个 Promise 对象
+    async function findPath(map, start, end) {
+        let table = Object.create(map);
+        let queue = [start];
+        //入队
+        async function insert(x, y, pre) {
+            //遇到边
+            if (x < 0 || x >= 100 || y < 0 || y >= 100) {
+                return;
+            }
+            //遇到墙或者已走过的点
+            if (table[x * 100 + y])
+                return;
+
+            // await sleep(10)
+            container.children[x * 100 + y].style.backgroundColor = "lightgreen";
+            //记录之前节点
+            table[x * 100 + y] = pre;
+            queue.push([x, y]);
+        }
+
+        while (queue.length) {
+            //出队
+            let [x, y] = queue.shift();
+            console.log(x, y);
+            if (x === end[0] && y === end[1]) {
+                let path = [];
+                container.children[x * 100 + y].style.backgroundColor = "purple";
+                while (x != start[0] || y != start[1]) {
+                    path.push(map[x * 100 + y]);
+                    [x, y] = table[x * 100 + y];
+                    await sleep(30)
+                    container.children[x * 100 + y].style.backgroundColor = "purple";
+                }
+                return path;
+            }
+            //入对，await 可以用于等待一个 async 函数的返回值——这也可以说是 await 在等 async 函数，但要清楚，它等的实际是一个返回值。
+            await insert(x + 1, y, [x, y]);
+            await insert(x - 1, y, [x, y]);
+            await insert(x, y + 1, [x, y]);
+            await insert(x, y - 1, [x, y]);
+
+            await insert(x + 1, y + 1, [x, y]);
+            await insert(x - 1, y - 1, [x, y]);
+            await insert(x - 1, y + 1, [x, y]);
+            await insert(x + 1, y - 1, [x, y]);
+        }
+        return null;
+    }
+
+
+
+</script>
