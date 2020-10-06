@@ -23,9 +23,8 @@
 <script>
     //具有排序功能的数据结构
     class Sorted {
-        constructor(data, compare) {
+        constructor(data) {
             this.data = data.slice();
-            this.compare = compare || ((a, b) => a - b);
         }
         //取出其中最小元素
         take() {
@@ -36,7 +35,7 @@
             let minIndex = 0;
 
             for (let i = 1; i < this.data.length; i++) {
-                if (this.compare(this.data[i], min) < 0) {
+                if (this.data[i][4] - min[4] < 0) {
                     min = this.data[i];
                     minIndex = i;
                 }
@@ -51,7 +50,7 @@
             this.data.push(v);
         }
         //返回元素个数
-        length() {
+        number() {
             return this.data.length;
         }
         //查询数组中是否已存在某个元素
@@ -107,72 +106,78 @@
 
     //寻路,利用启发式搜索A*算法，async 函数返回的是一个 Promise 对象
     async function findPath(map, start, end) {
-        let pre = start;//记录父节点
 
-        let openlist = new Sorted([start], (a, b) => distance(a) - distance(b)); //开启列表
+        let openlist = new Sorted([start]); //开启列表
         let closelist = new Map(); //关闭列表
 
-        //入队
-        async function insert(x, y, px, py) {
+        //openlist入队,x,y分别为新探索节点坐标，px,py分别为新探索节点的父节点坐标，startdis为新探索节点的父节点到起点的距离
+        async function insert(x, y, px, py, startdis) {
+            //计算寻路消耗，dis代表寻路消耗，start代表该点距离起点的距离
+            let [dis, newstartdis] = distance(x, y, px, py, startdis);
             //遇到边
             if (x < 0 || x >= 100 || y < 0 || y >= 100) {
                 return;
             }
             //遇到墙或者已加入openlist,closelist，则不用再次管它
-            if (map[x * 100 + y] || openlist.has([x, y]) || closelist[x * 100 + y])
+            if (map[x * 100 + y] || openlist.has([x, y, px, py, dis, newstartdis]) || closelist.has(x * 100 + y))
                 return;
 
 
             container.children[x * 100 + y].style.backgroundColor = "lightgreen";
-            await sleep(5);
-            //记录之前节点
-            closelist[x * 100 + y] = pre;
+            // await sleep(5);
 
-            openlist.give([x, y, px, py]);
+            //保存该节点相关信息到openlist
+            openlist.give([x, y, px, py, dis, newstartdis]);
+            //放入closelist,并记录父节点,此句存在bug
+            closelist.set(x * 100 + y, [px, py]);
+            return;
         }
 
-        //寻路消耗公式，影响最终计算效率，可以改进
-        function distance(point) {
-            return Math.sqrt((point[0] - end[0]) ** 2 + (point[1] - end[1]) ** 2)  + Math.sqrt((point[0] - start[0]) ** 2 + (point[1] - start[1]) ** 2);
-
+        //计算寻路消耗=该节点到父节点的距离+父节点到起点的距离+该节点到终点的距离
+        function distance(x, y, px, py, startdis) {
+            startdis = Math.sqrt((x - px) ** 2 + (y - py) ** 2) + startdis;
+            return [Math.sqrt((x - end[0]) ** 2 + (y - end[1]) ** 2) + startdis, startdis];
         }
 
-        //找到最佳到达路径，并绘制出来
-        while (openlist.length()) {
-            //从openlist出队
-            let [x, y, px, py] = openlist.take();
-            //放入closelist,并记录父节点
-            closelist[x * 100 + y] = [px, py];
+        //每次从openlist找到寻路消耗最小的点，进而找到最佳到达路径，并绘制出来
+        while (openlist.number()) {
+            //从openlist出队，选取优先级最高的节点
+            let [x, y, px, py, dis, startdis] = openlist.take();
 
-            //如果找到最终节点，则绘制路径，计算总步数
+            //如果是最终节点，则绘制路径，计算总步数
             if (x === end[0] && y === end[1]) {
-                let count = 2;
-                let path = [];
+                let count = 1; //记录总步数
+                let path = []; //记录路径坐标
+                path.push([x, y]);
                 container.children[x * 100 + y].style.backgroundColor = "purple";
                 while (x != start[0] || y != start[1]) {
-                    path.push(map[x * 100 + y]);
-                    [x, y] = closelist[x * 100 + y];
-                    await sleep(5)
+                    [x, y] = closelist.get(x * 100 + y); //找到父节点坐标
+                    path.push([x, y]); //节点加入路径
+                    // await sleep(5);
                     container.children[x * 100 + y].style.backgroundColor = "purple";
                     count++;
                 }
                 document.getElementById("count").innerHTML = "从起点到终点总共需要" + count + "步";
+                console.log(path);
                 return path;
             }
-            //入队openlist，await 可以用于等待一个 async 函数的返回值——这也可以说是 await 在等 async 函数，但要清楚，它等的实际是一个返回值。
-            await insert(x + 1, y, x, y);
-            await insert(x - 1, y, x, y);
-            await insert(x, y + 1, x, y);
-            await insert(x, y - 1, x, y);
+            //如果不是最终节点，await 可以用于等待一个 async 函数的返回值——这也可以说是 await 在等 async 函数，但要清楚，它等的实际是一个返回值。
+            //放入closelist,并记录父节点
+            closelist.set(x * 100 + y, [px, py]);
+            //遍历该节点的临近节点，
+            await insert(x + 1, y, x, y, startdis);
+            await insert(x - 1, y, x, y, startdis);
+            await insert(x, y + 1, x, y, startdis);
+            await insert(x, y - 1, x, y, startdis);
 
-            await insert(x + 1, y + 1, x, y);
-            await insert(x - 1, y - 1, x, y);
-            await insert(x - 1, y + 1, x, y);
-            await insert(x + 1, y - 1, x, y);
+            await insert(x + 1, y + 1, x, y, startdis);
+            await insert(x - 1, y - 1, x, y, startdis);
+            await insert(x - 1, y + 1, x, y, startdis);
+            await insert(x + 1, y - 1, x, y, startdis);
         }
         return null;
     }
 
-    findPath(map, [0, 0, 0, 0], [99, 99]);
+    findPath(map, [0, 0, 0, 0, 0, 0], [99, 99]);
 
 </script>
