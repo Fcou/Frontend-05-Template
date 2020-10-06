@@ -1,0 +1,178 @@
+<style>
+    .cell {
+        display: inline-block;
+        line-height: 7px;
+        width: 6px;
+        height: 6px;
+        background-color: gray;
+        border-bottom: solid 1px white;
+        border-right: solid 1px white;
+        vertical-align: top;
+    }
+
+    #container {
+        width: 701px;
+    }
+</style>
+<div id="container"></div>
+
+<!--使用 JSON.stringify() 方法将 JavaScript 对象转换为字符串。-->
+<!--使用 local Storage 创建一个本地存储的 name/value 对，name="lastname" value="Smith", 然后检索 "lastname" 的值，并插入到 id="result" 的元素上-->
+<button onclick="localStorage['map']= JSON.stringify(map)"> save </button>
+<p id="count">从起点到终点总共需要 步</p>
+<script>
+    //具有排序功能的数据结构
+    class Sorted {
+        constructor(data, compare) {
+            this.data = data.slice();
+            this.compare = compare || ((a, b) => a - b);
+        }
+        //取出其中最小元素
+        take() {
+            if (!this.data.length) {
+                return;
+            }
+            let min = this.data[0];
+            let minIndex = 0;
+
+            for (let i = 1; i < this.data.length; i++) {
+                if (this.compare(this.data[i], min) < 0) {
+                    min = this.data[i];
+                    minIndex = i;
+                }
+            }
+
+            this.data[minIndex] = this.data[this.data.length - 1];
+            this.data.pop();
+            return min;
+        }
+        //放入一个元素
+        give(v) {
+            this.data.push(v);
+        }
+        //返回元素个数
+        length() {
+            return this.data.length;
+        }
+        //查询数组中是否已存在某个元素
+        has(v) {
+            return this.data.indexOf(v) != -1;
+        }
+    }
+    //JSON.parse() 方法用来解析JSON字符串，构造由字符串描述的JavaScript值或对象。
+    let map = localStorage["map"] ? JSON.parse(localStorage["map"]) : Array(10000).fill(0);
+    let container = document.getElementById("container")
+
+    let mousedone = false;
+    let clear = false;
+
+    //绘制地图
+    for (let x = 0; x < 100; x++) {
+        for (let y = 0; y < 100; y++) {
+            let cell = document.createElement("div");
+            cell.classList.add("cell");
+            //0代表没墙，1代表有墙，颜色区分
+            if (map[100 * x + y] == 1) {
+                cell.style.backgroundColor = "black";
+            }
+            //编辑地图
+            cell.addEventListener("mousemove", () => {
+                if (mousedone) {
+                    if (clear) {
+                        cell.style.backgroundColor = "";
+                        map[100 * x + y] = 0;
+                    } else {
+                        cell.style.backgroundColor = "black";
+                        map[100 * x + y] = 1;
+                    }
+                }
+            })
+            container.appendChild(cell);
+        }
+    }
+    //e简单来说就是指向了当前发生的事件
+    document.addEventListener("mousedown", e => {
+        mousedone = true;
+        //event.which也将正常化的按钮按下(mousedown 和 mouseupevents)，左键报告1，中间键报告2，右键报告3
+        clear = (e.which === 3)
+    })
+    document.addEventListener("mouseup", () => mousedone = false);
+    document.addEventListener("contextmenu", e => e.preventDefault());
+
+    function sleep(t) {
+        return new Promise(function (resolve, reject) {
+            setTimeout(resolve, t);
+        });
+    }
+
+    //寻路,利用启发式搜索A*算法，async 函数返回的是一个 Promise 对象
+    async function findPath(map, start, end) {
+        let pre = start;//记录父节点
+
+        let openlist = new Sorted([start], (a, b) => distance(a) - distance(b)); //开启列表
+        let closelist = new Map(); //关闭列表
+
+        //入队
+        async function insert(x, y, px, py) {
+            //遇到边
+            if (x < 0 || x >= 100 || y < 0 || y >= 100) {
+                return;
+            }
+            //遇到墙或者已加入openlist,closelist，则不用再次管它
+            if (map[x * 100 + y] || openlist.has([x, y]) || closelist[x * 100 + y])
+                return;
+
+
+            container.children[x * 100 + y].style.backgroundColor = "lightgreen";
+            await sleep(5);
+            //记录之前节点
+            closelist[x * 100 + y] = pre;
+
+            openlist.give([x, y, px, py]);
+        }
+
+        //寻路消耗公式，影响最终计算效率，可以改进
+        function distance(point) {
+            return Math.sqrt((point[0] - end[0]) ** 2 + (point[1] - end[1]) ** 2)  + Math.sqrt((point[0] - start[0]) ** 2 + (point[1] - start[1]) ** 2);
+
+        }
+
+        //找到最佳到达路径，并绘制出来
+        while (openlist.length()) {
+            //从openlist出队
+            let [x, y, px, py] = openlist.take();
+            //放入closelist,并记录父节点
+            closelist[x * 100 + y] = [px, py];
+
+            //如果找到最终节点，则绘制路径，计算总步数
+            if (x === end[0] && y === end[1]) {
+                let count = 2;
+                let path = [];
+                container.children[x * 100 + y].style.backgroundColor = "purple";
+                while (x != start[0] || y != start[1]) {
+                    path.push(map[x * 100 + y]);
+                    [x, y] = closelist[x * 100 + y];
+                    await sleep(5)
+                    container.children[x * 100 + y].style.backgroundColor = "purple";
+                    count++;
+                }
+                document.getElementById("count").innerHTML = "从起点到终点总共需要" + count + "步";
+                return path;
+            }
+            //入队openlist，await 可以用于等待一个 async 函数的返回值——这也可以说是 await 在等 async 函数，但要清楚，它等的实际是一个返回值。
+            await insert(x + 1, y, x, y);
+            await insert(x - 1, y, x, y);
+            await insert(x, y + 1, x, y);
+            await insert(x, y - 1, x, y);
+
+            await insert(x + 1, y + 1, x, y);
+            await insert(x - 1, y - 1, x, y);
+            await insert(x - 1, y + 1, x, y);
+            await insert(x + 1, y - 1, x, y);
+        }
+        return null;
+    }
+
+    findPath(map, [0, 0, 0, 0], [99, 99]);
+
+</script>
