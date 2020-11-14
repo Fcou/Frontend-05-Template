@@ -80,7 +80,7 @@
 - String
 - Boolean
 - Object
-‵‵`
+```
 1.对象三要素:唯一标识、状态、行为
 2.在设计对象的状态和行为时，我们总时遵循“行为改变状态”的原则。
 class Human{
@@ -93,6 +93,7 @@ class Human{
 固有对象（Intrinsic Objects ）：由标准规定，随着 JavaScript 运行时创建而自动创建的对象实例。
 原生对象（Native Objects）：可以由用户通过 Array、RegExp 等内置构造器或者特殊语法创建的对象。
 普通对象（Ordinary Objects）：由{}语法、Object 构造器或者 class 关键字定义类创建的对象，它能够被原型继承。
+
 ```
 - Null
 - Undefined
