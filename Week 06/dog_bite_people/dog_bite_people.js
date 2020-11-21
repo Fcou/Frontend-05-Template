@@ -11,7 +11,7 @@ class Dog{
     constructor(){
         this.damage = 10
     }
-    bite(){
+    doHurt(){
         return this.damage
     }
 }
