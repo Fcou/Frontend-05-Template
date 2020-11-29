@@ -109,7 +109,7 @@ class ResponseParser{
         }else if(this.status === this.WAIT_HEADER_NAME){
             if(c === ':')
                 this.status = this.WAIT_HEADER_SPACE
-            else if(c === '\r'){   // 所有的头信息接受完毕，准备进入WAIT_BODY
+            else if(c === '\r'){   
                 this.status = this.WAIT_HEADER_LINE_BLOCK_END
                 this.bodyParser = new TrunckedBodyParser()
             }
@@ -189,9 +189,7 @@ void async function(){
             "X-Foo": "123456"
         },
         data: {
-            "username":"jason",
-            "password":"123456",
-            "testChuncked": "a".repeat(100000) 
+            "content":"Hello"
         }
     })
 
