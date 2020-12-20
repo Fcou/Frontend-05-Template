@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <div>
+    <div class="class" id="id">test</div>
+  </div>
+</body>
+<script>
+  function match(selector, element) {
+    let selectors = selector.split(',');    //  反转选择器数组
+    selectors = selectors.map(item => item.split(' ').reverse());
+
+    let queue = [];
+    while (element && element.tagName) {
+      queue.push(element);
+      element = element.parentElement;
+    }
+
+    for (let i = 0; i < selectors.length; i++) {
+      let selectorParts = selectors[i];
+      let matchNum = 0;
+      for (let j = 0; j < queue.length; j++) {  //  遍历元素
+        if (matchHelper(queue[j], selectorParts[matchNum])) {
+          matchNum++;
+        }
+      }
+      if (matchNum >= selectorParts.length) { //  所有元素匹配上
+        return true;
+      }
+    }
+    return false;
+  }
+
+
+  function matchHelper(element, selector) { //  匹配辅助函数
+    if (!selector || !element.attributes) {
+      return false;
+    }
+    if (selector.startsWith('#')) { //  id
+      let attr = Array.from(element.attributes).filter(attr => attr.name === 'id')[0];
+      if (attr && attr.value === selector.replace('#', '')) {
+        return true;
+      }
+    } else if (selector.startsWith('.')) { //  class
+      let attr = Array.from(element.attributes).filter(attr => attr.name === 'class')[0];
+      if (attr && attr.value === selector.replace('.', '')) {
+        return true;
+      }
+      if (attr && attr.value.split(' ').includes(selector.replace('.', ''))) { //  子类
+        return true;
+      }
+    } else if (selector.match(/[.#:\[]/)) {
+      const simpleSelectors = selector.split(/(?<=[\w\]\)])(?=[#.:\[])/); //  组合选择器
+      return simpleSelectors.every(simpleSelector => matchHelper(element, simpleSelector));
+    } else {
+      return selector === element.tagName.toLowerCase(); //  标签选择器
+    }
+    return false;
+  }
+  console.log(match("div #id", document.getElementById("id")));
+</script>
+
+</html>
