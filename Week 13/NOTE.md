@@ -1,1 +1,185 @@
 学习笔记
+
+# 重学 HTML
+
+HTML 源于 XML 和 SGML(数据描述系统)，是他们的子集 ==> html<XML<SGML
+	由于html是SGML的一个子集，所以html有符合SGML定义的DTD
+	xhtml是w3c对html做了xml化的尝试, 还有一个xhtml2,但是它过于严苛的规定，导致社区不接受，就没被使用。
+	后来html5重新定义了XML和SGML的关系，所以才有了今天的html
+#### HTML标签语义
+* aside 不是最重要的一些内容，比如目录之内的
+* main  页面主体，一个html,只能有一个
+* article 文章
+* hgroup  标题组
+* h1
+* h2
+* p.note 不知道用什么表示，可以用p标签加一个类，类名作为注解
+* abbr  缩写
+* em 语气上的一种表达句子中强调的词语（句子中的重音词语）
+* strong 不改变语义的，这个词很重要
+* figure 标签组
+* img
+* figcaption 标签内容说明
+* ol 有序列表
+* ul 无序列表
+* pre 预先设置好的样式，如果里面需要原样输出html标签则需要转义
+* code 表示里面的原样输出的代码
+
+#### HTML语法
+#### 合法元素
+* Element: <tagname> ... </tagname>
+* Text: text
+* Comment: <!-- comments -->
+* DocumentType: <Doctype html>
+* ProcessingInsturction: <?a 1?> //预处理语法 （目前没啥用）
+* CDATA: <![CDATA[]]> 里面是文本节点，不需要考虑转义 （来自xml）
+
+#### 常用的语义标签
+
+- header
+- main 一般表示页面主体，只有一个
+- nav
+- article
+- aside
+- h1,h2,strong
+- ol,li
+- pre,code
+- footer
+
+#### 语义化的意义：
+
+- 便于 SEO
+- 代码更有意义，便于理解和维护
+
+### 浏览器 API | DOM API
+
+
+#### 导航类操作
+
+node 类
+
+- parentNode
+- childNodes
+- firstChild
+- lastChild
+- nextSibling
+- previousSibling
+
+  标签元素类
+
+- parentElement
+- children
+- firstElementChild
+- lastElementChild
+- nextElementSibling
+- previousElementSibling
+
+#### 修改操作
+
+- appendChild
+- insertBefore
+- removeChild
+- replaceChild
+
+#### 高级操作
+
+- compareDocumentPosition 是一个用于比较两个节点中关系的函数
+- contains 检查一个节点是否包含另一个节点的函数
+- isEqualNode 检查两个节点是否完全相同
+- isSameNode 检查两个节点是否是同一个节点，实际上在 JavaScript 中可以用"==="
+- cloneNode 复制一个节点，如果传入参数 true，则会连同子元素做深拷贝
+
+### 事件 API
+
+addEventListener
+
+#### 冒泡和捕获
+
+事件是先捕获，再冒泡
+
+因为浏览器是先触发外层的事件，再根据事件的触发点一层层，计算到的
+
+```html
+<div>
+  <span></span>
+</div>
+```
+
+这段代码中，先捕获，顺序是 div>span
+再冒泡，顺序是 span>div
+
+### Range API
+
+比节点 API 更细致，比如操作半个节点
+
+```js
+var range = new Range() // 创建Range对象
+range.setStart(element, 9) // 设置起始点
+range.setEnd(element, 4) // 设置终点
+var range = document.getSelection().getRangeAt(0)
+// 设置起点在某个节点之前
+range.setStartBefore
+// 设置终点在某个节点之前
+range.setEndBefore
+// 设置起点在节点之后
+range.setStartAfter
+// 设置终点在节点之后
+range.setEndAfter
+// Range 的起始和结束节点的父节点与 referenceNode 的父节点相同。
+range.selectNode(referenceNode)
+// 选中元素的所有内容
+range.selectNodeContents
+var fragment = range.extractContents()
+range.insertNode(document.createTextNode('aa'))
+```
+
+tips:
+在操作DOM的框架库中，range和fragment通常一起工作，在内存中实现元素的增删改，然后一次性执行DOM操作。这样可以减少DOM操作，优化性能。
+
+### CSSOM API
+
+`document.styleSheets` 获取CSS
+
+- Rules
+`document.styleSheets[0].cssRules`
+`document.styleSheets[0].insertRule("p {color:pink;}",0)` 在某个位置插入样式
+`document.styleSheets[0].removeRule(0)` 删除某个位置的样式
+
+- CSSStyleRule
+
+- window.getComputedStyle(el,pseudoEl)
+el 想获取的元素
+pseudoEl 伪元素
+应用：比如动画的中间态，或者伪元素等样式的获取
+
+### CSSOM View
+
+#### window对象
+视窗，浏览器全局对象
+
+比较重要的值
+window.innerWidth 视窗宽度
+window.innerHeight 视窗高度
+window.devicePixelRatio 设备像素比，普通是1:1，retina屏有可能1:2和1:3
+
+window.open(url,type)
+type：打开方式 _self当前页面 _blank新页面
+还有第三个参数，用于控制新窗口的宽高和位置（通常弹框广告可以这样实现，不推荐）
+
+#### 关于scroll
+scrollTop
+scrollLeft
+scrollWidth
+scrollHeight
+scroll(x,y)
+scrollBy(x,y)
+scrollIntoView() 每个元素都有的方法，滚动到视图可见区域
+
+window.scrollX
+window.scrollY
+window.scroll(x,y)
+window.scrollBy(x,y)
+
+#### 关于layout
+getClientRects() 获取元素占据页面的所有矩形区域 
+getBoundingClientRects() 返回元素的大小及其相对于视口的位置（使用比例很高）
